@@ -101,7 +101,7 @@ if st.session_state.epsg_result:
     st.markdown("### 🗺️ Location Map")
     m = folium.Map(location=[lat, lon], zoom_start=6)
     folium.Marker([lat, lon], tooltip=f"EPSG:{get_epsg(lat, lon)[1]}").add_to(m)
-    st_folium(m, width=700, returned_objects=[])
+    _ = st_folium(m, width=700, returned_objects=[])
 
 # ------------------------- CSV Upload Section -----------------------
 st.markdown("---")
