@@ -9,6 +9,10 @@ st.set_page_config(page_title="EPSG Finder by Surabhi", layout="centered")
 st.title("🗺️ EPSG & Coordinate System Finder")
 st.markdown("Identify correct UTM zones, EPSG codes, and alternate projections from geographic coordinates.")
 
+# ------------------------- Session State Init -----------------------
+if "epsg_result" not in st.session_state:
+    st.session_state.epsg_result = None
+
 # ------------------------- Coordinate Format Selector -----------------------
 format_option = st.selectbox(
     "Choose input coordinate format:",
@@ -66,22 +70,38 @@ def get_projection_info(lat, lon):
         "World Cylindrical Equal Area": "EPSG:54034"
     }
 
-# ------------------------- Button Output -----------------------
+# ------------------------- Manual Button Logic -----------------------
 if st.button("🔍 Find EPSG Code", key="manual_epsg"):
     if lat == 0 and lon == 0:
         st.warning("Please enter valid coordinates.")
+        st.session_state.epsg_result = None
     else:
-        st.success(f"📌 Coordinates: ({lat:.6f}, {lon:.6f})")
-
         projections = get_projection_info(lat, lon)
-        for name, code in projections.items():
-            st.markdown(f"✅ {name}: **{code}**  [View](https://epsg.io/{code.split(':')[-1]})")
+        st.session_state.epsg_result = {
+            "lat": lat,
+            "lon": lon,
+            "projections": projections
+        }
 
-        st.markdown("### 🗺️ Location Map")
-        map_center = [lat, lon]
-        m = folium.Map(location=map_center, zoom_start=6)
-        folium.Marker([lat, lon], tooltip=f"EPSG:{get_epsg(lat, lon)[1]}").add_to(m)
-        st_folium(m, width=700)
+# Clear button
+if st.button("❌ Clear Results"):
+    st.session_state.epsg_result = None
+
+# Display result
+if st.session_state.epsg_result:
+    lat = st.session_state.epsg_result["lat"]
+    lon = st.session_state.epsg_result["lon"]
+    projections = st.session_state.epsg_result["projections"]
+
+    st.success(f"📌 Coordinates: ({lat:.6f}, {lon:.6f})")
+
+    for name, code in projections.items():
+        st.markdown(f"✅ {name}: **{code}**  [View](https://epsg.io/{code.split(':')[-1]})")
+
+    st.markdown("### 🗺️ Location Map")
+    m = folium.Map(location=[lat, lon], zoom_start=6)
+    folium.Marker([lat, lon], tooltip=f"EPSG:{get_epsg(lat, lon)[1]}").add_to(m)
+    st_folium(m, width=700)
 
 # ------------------------- CSV Upload Section -----------------------
 st.markdown("---")
